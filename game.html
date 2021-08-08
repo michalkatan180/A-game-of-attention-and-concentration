@@ -1,0 +1,219 @@
+﻿<!--בס"ד-->
+<!DOCTYPE html>
+<html>
+<head>
+
+    <meta charset="utf-8" />
+    <title></title>
+    <style>
+        * {
+            vertical-align: top;
+            overflow: hidden;
+        }
+
+        body {
+            background-repeat: no-repeat;
+            background-size: 100vw;
+            background-color: black;
+        }
+
+        #ball {
+            width: 120px;
+            height: 120px;
+            background-color: lightslategray;
+            border-radius: 180px;
+            position: absolute;
+        }
+
+        #newGame {
+            z-index: 8;
+            position: absolute;
+            width: 5vw;
+            top: 2vh;
+            left: 1vw;
+        }
+
+        #sum_end {
+            position: absolute;
+            z-index: 8;
+            width: 32vw;
+            font-size: 26vh;
+            color: red;
+            left: 36vw;
+            text-shadow: 2px 2px white;
+        }
+
+        table, td {
+            z-index: -18;
+            border: 0.1px solid white;
+        }
+
+        td {
+            width: 3vw;
+            height: 6vh;
+            /*כיצד להגדיר שהצורה תהיה רבועית ולא מלבנית?*/
+        }
+
+        table {
+            border-collapse: collapse;
+        }
+    </style>
+
+</head>
+<!--?כיצד להגדיר את החלון שיפתח בגודל שאבחר מראש-->
+<body onresize="createTable()">
+
+    <div id="ball"></div>
+    <input type="button" id="newGame" onclick="window.location='game.html'" value="new game" />
+    <!--<div id="sum"></div>-->    <!--להצגת סך הנקודות כל הזמן-->
+    <div id="sum_end"></div>    <!--להצגת הציון בסוף-->
+    <script>
+        var times = [1500, 1700, 1800, 2600, 2700, 3200, 3600];
+        var colors = ["green", "red", "pink", "yellow", "blue"];
+        var clicked = 0;
+        var sum = 0;
+        var isFirst = true;
+        var counts = 0;
+        var func1 = setTimeout(moveBall, 0);
+        var func2 = changeBallColor();
+
+        document.onkeypress = function (e) {
+            if (e.keyCode == 32) {
+                clicked++;
+            }
+        };
+
+        //סיום המשחק
+        setTimeout(() => {
+            clearTimeout(func1, 0);
+            clearTimeout(func2, 0);
+            var max_mark = counts * 3;
+            var mark = sum / max_mark;
+            console.log(sum + "/" + max_mark + "=" + mark);
+            (mark < 0) ? mark = 0 : mark *= 100;
+            mark = parseInt(mark);
+            document.getElementById("sum_end").innerHTML = mark + "%";
+        }, 26000);//מתי סיום המשחק
+
+        createTable();
+
+        //הרקע
+        function createTable() {
+            var x = document.getElementsByTagName("table")[0];
+            if (x != undefined)
+                x.remove();
+
+            var ta = document.createElement("table");
+            for (var i = 0; i < 100 / 6; i++) {
+                var tr = document.createElement("tr");
+                for (var j = 0; j < 100 / 3; j++) {
+                    var td = document.createElement("td");
+                    tr.appendChild(td);
+                }
+                ta.appendChild(tr);
+            }
+            document.body.appendChild(ta);
+        }
+
+        function changeBallColor() {
+            //להצגת הציון כל הזמן
+            //document.getElementById("sum").innerHTML = sum;
+
+            var currentColorIndex = colors.indexOf(document.getElementById("ball").style.backgroundColor);
+            var rand;
+            do {
+                rand = Math.round(Math.random() * 100 % (colors.length - 1));
+            } while (rand == currentColorIndex);
+            document.getElementById("ball").style.backgroundColor = colors[rand];
+            //console.log("change now color to " + colors[rand]);
+            rand = Math.round(Math.random() * 100 % (times.length - 1));
+            if (isFirst == true) {
+                //בצבע הראשון לא בודקים אם לחץ
+                isFirst = false;
+            }
+            else {
+                //עד רבע השניה לפני שמתחלף הצבע, ניתן להקיש במקלדת
+                setTimeout(check, times[rand] - 250);
+            }
+            func2 = setTimeout(changeBallColor, times[rand]);
+        }
+
+        function check() {
+            counts++;
+            if (clicked > 0) {
+                sum += 3;
+                console.log("לחצת טוב, הסך כעת: " + sum);
+                for (var i = 0; i < clicked - 1; i++) {
+                    sum -= 1
+                    console.log("לחצת סתם, הסך כעת: " + sum);
+                }
+            }
+            else {
+                sum -= 2;
+                console.log("לא לחצת, הסך כעת: " + sum);
+            }
+            //לאפס מספר לחיצות
+            clicked = 0;
+        }
+
+        var id = null;
+        var pos_t_now = 8;
+        var pos_l_now = 8;
+        var siman_left;
+        var siman_top;
+
+        function moveBall() {
+            var elem = document.getElementById("ball");
+
+            //תלוי בגירסה
+            //var h = window.height - 120;
+            //var w = window.width - 120;
+            var h = window.innerHeight - 120;
+            var w = window.innerWidth - 120;
+
+            var pos_t_from = pos_t_now;
+            var pos_l_from = pos_l_now;
+
+            var pos_t_end = Math.floor(Math.random() * (h + 1));
+            var pos_l_end = Math.floor(Math.random() * (w + 1));
+            pos_t_end = parseInt(pos_t_end / 100) * 100;
+            pos_l_end = parseInt(pos_l_end / 100) * 100;
+
+            siman_top = (pos_t_end > pos_t_from) ? '+' : '-';
+            siman_left = (pos_l_end > pos_l_from) ? '+' : '-';
+
+            func1 = setTimeout(frame, 0.1);
+
+            function frame() {
+
+                // אם :
+                // left+ זז מידי ימינה
+                // top+ זז מידי למטה
+                // left- זז מידי שמאלה
+                // top- זז מידי למעלה
+                // אז: ישנה כיוון
+                if ((siman_top == '+' && pos_t_now >= h) ||
+                    (siman_left == '+' && pos_l_now >= w) ||
+                    (siman_top == '-' && pos_t_now <= 0) ||
+                    (siman_left == '-' && pos_l_now <= 0)) {
+                    pos_t_now = (pos_t_now < 0) ? 8 : (pos_t_now >= h) ? h - 8 : pos_t_now;
+                    pos_l_now = (pos_l_now < 0) ? 8 : (pos_l_now >= w) ? w - 8 : pos_l_now;
+                    func1 = setTimeout(moveBall, 0);
+                }
+                else {
+                    if (siman_top == '+') pos_t_now++;
+                    else pos_t_now--;
+                    if (siman_left == '+') pos_l_now += 2;
+                    else pos_l_now--;
+                    elem.style.top = pos_t_now + "px";
+                    elem.style.left = pos_l_now + "px";
+                    func1 = setTimeout(frame, 0.1);
+                }
+            }
+        }
+
+    </script>
+
+
+</body>
+</html>
